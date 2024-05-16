@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +17,8 @@ import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import com.dev.issuebook.constant.IssueBookJsonKeys;
 
 @Service
 public class DevIssueBookServiceImpl implements com.dev.issuebook.service.DevIssueBookService {
@@ -40,8 +44,17 @@ public class DevIssueBookServiceImpl implements com.dev.issuebook.service.DevIss
 
 		JSONArray fileData = getFileDataIfPresent(issueFile);
 
+		validateAndRectifyData(issueJson);
+
+		log.info(issueJson.toString());
+
 		writeJsonObjectToFile(issueJson, fileData, issueFile);
 
+	}
+
+	private void validateAndRectifyData(JSONObject issueJson) {
+		Arrays.stream(IssueBookJsonKeys.values()).filter(k -> !issueJson.has(k.name()))
+				.map(k -> issueJson.put(k.name(), ""));
 	}
 
 	private JSONArray getFileDataIfPresent(final File issueFile) {
@@ -81,6 +94,30 @@ public class DevIssueBookServiceImpl implements com.dev.issuebook.service.DevIss
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void cleanUpIssueBook() {
+
+		final File issueFile = new File(FILE_PATH);
+
+		JSONArray fileData = getFileDataIfPresent(issueFile);
+
+		List<UUID> idsToDelete = new ArrayList<UUID>();
+
+		if (!fileData.isEmpty()) {
+
+			fileData.forEach(data -> {
+				JSONObject json = (JSONObject) data;
+
+				if (json.isNull("issueDesc")
+						|| json.getString("issueDesc").isEmpty()) {
+					idsToDelete.add(UUID.fromString(json.get("id").toString()));
+				}
+			});
+		}
+
+		System.out.println(idsToDelete);
 	}
 
 	@Override
