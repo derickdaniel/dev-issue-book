@@ -11,6 +11,4 @@ public interface DevIssueBookService {
 	void saveIssue(JSONObject issueJson);
 
 	void updateIssue(JSONObject issueJson, Long id);
-
-	void cleanUpIssueBook();
 }

@@ -1,6 +1,6 @@
 package com.dev.issuebook.constant;
 
-public enum IssueBookJsonKeys {
+public enum Keys {
 	
     ISSUE_DESC("issueDesc"),
 	ISSUE_TYPE("issueType"),
@@ -11,7 +11,7 @@ public enum IssueBookJsonKeys {
 	TAGS("tags"),
 	REFERENCES("references");
 	
-	IssueBookJsonKeys(String key) {
+	Keys(String key) {
 		
 	}
 

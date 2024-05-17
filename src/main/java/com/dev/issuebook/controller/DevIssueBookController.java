@@ -41,8 +41,6 @@ public class DevIssueBookController {
 	@GetMapping("/issue")
 	public List<Object> getIssues() {
 
-		
-		service.cleanUpIssueBook();
 		List<Object> issues = service.listIssues();
 
 		log.info("Returning issue list of size: " + issues.size() + " at: " + new Timestamp(System.currentTimeMillis()));
