@@ -40,12 +40,24 @@ public class DevIssueBookHelper {
 		return new JSONArray();
 	}
 
-	public static void writeJsonObjectToFile(final JSONObject issueJson, final JSONArray fileData,
-			final File issueFile) {
+	public static void writeJsonObjectToFile(final JSONArray fileData, final File issueFile) {
 
 		try (FileWriter file = new FileWriter(issueFile, false)) {
 
-			issueJson.put("id", UUID.randomUUID());
+			file.write(fileData.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void writeJsonObjectToFile(final JSONObject issueJson, final JSONArray fileData, final File issueFile,
+			boolean isNew) {
+
+		try (FileWriter file = new FileWriter(issueFile, false)) {
+
+			if (isNew) {
+				issueJson.put(Keys.ID.getVal(), UUID.randomUUID());
+			}
 
 			if (nonNull(fileData)) {
 
@@ -62,7 +74,7 @@ public class DevIssueBookHelper {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static JSONArray validateKeys(JSONArray data) {
 
 		JSONArray rectifiedData = new JSONArray();
@@ -82,7 +94,7 @@ public class DevIssueBookHelper {
 
 		return rectifiedData;
 	}
-	
+
 	public static void cleanUpIssueBook() {
 
 		final File issueFile = new File("");

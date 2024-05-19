@@ -11,8 +11,14 @@ public enum Keys {
 	TAGS("tags"),
 	REFERENCES("references");
 	
+	private String key;
+	
 	Keys(String key) {
-		
+		this.key = key;
+	}
+	
+	public String getVal() {
+		return key;
 	}
 
 }

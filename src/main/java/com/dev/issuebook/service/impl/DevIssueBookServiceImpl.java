@@ -6,7 +6,10 @@ import static com.dev.issuebook.util.DevIssueBookHelper.validateAndRectifyData;
 import static com.dev.issuebook.util.DevIssueBookHelper.writeJsonObjectToFile;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -14,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.dev.issuebook.constant.Keys;
 import com.dev.issuebook.service.DevIssueBookService;
 
 @Service
@@ -24,9 +28,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 	@Override
 	public List<Object> listIssues() {
 
-		final File issueFile = new File(FILE_PATH);
-
-		JSONArray fileData = getFileDataIfPresent(issueFile);
+		JSONArray fileData = getFileDataIfPresent(new File(FILE_PATH));
 
 		return fileData.toList();
 	}
@@ -42,11 +44,63 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 
 		log.info(issueJson.toString());
 
-		writeJsonObjectToFile(issueJson, fileData, issueFile);
+		writeJsonObjectToFile(issueJson, fileData, issueFile, true);
 	}
 
 	@Override
-	public void updateIssue(JSONObject issueJson, Long id) {
+	public void updateIssue(JSONObject issueJson, String id) {
+		
+		final File issueFile = new File(FILE_PATH);
+
+		JSONArray issueArray = removeJsonObjectById(id, issueFile);
+		
+		writeJsonObjectToFile(issueJson, issueArray, issueFile, false);
 	}
 
+	private JSONArray removeJsonObjectById(String id, final File issueFile) {
+		JSONArray issueArray = getFileDataIfPresent(issueFile);
+		int counter = 0;
+		
+		Iterator<Object> itr = issueArray.iterator();
+		
+		while (itr.hasNext()) {
+			JSONObject json = (JSONObject) itr.next();
+
+			if (id.equals(json.getString(Keys.ID.getVal()))) {
+				issueArray.remove(counter);
+				break;
+			}
+			counter++;
+		}
+		return issueArray;
+	}
+
+	@Override
+	public JSONObject getIssueById(String id) {
+
+		JSONArray issueArray = getFileDataIfPresent(new File(FILE_PATH));
+
+		JSONObject issueDetails = new JSONObject();
+
+		Iterator<Object> itr = issueArray.iterator();
+		while (itr.hasNext()) {
+			JSONObject json = (JSONObject) itr.next();
+
+			if (id.equals(json.getString(Keys.ID.getVal()))) {
+				issueDetails = json;
+				break;
+			}
+		}
+		return issueDetails;
+	}
+
+	@Override
+	public void deleteIssueById(String id) {
+		
+		final File issueFile = new File(FILE_PATH);
+
+		JSONArray issueArray = removeJsonObjectById(id, issueFile);
+		
+		writeJsonObjectToFile(issueArray, issueFile);
+	}
 }
