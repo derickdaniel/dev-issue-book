@@ -9,7 +9,8 @@ public enum Keys {
 	RESOLUTION("resolution"),
 	RESOLVED("resolved"),
 	TAGS("tags"),
-	REFERENCES("references");
+	REFERENCES("references"),
+	CREATED_AT("createdAt");
 	
 	private String key;
 	

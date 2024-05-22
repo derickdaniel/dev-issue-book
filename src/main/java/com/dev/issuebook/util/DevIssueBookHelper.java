@@ -6,10 +6,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.json.JSONArray;
@@ -50,14 +55,12 @@ public class DevIssueBookHelper {
 		}
 	}
 
-	public static void writeJsonObjectToFile(final JSONObject issueJson, final JSONArray fileData, final File issueFile,
+	public static void writeOrUpdateToFile(final JSONObject issueJson, final JSONArray fileData, final File issueFile,
 			boolean isNew) {
 
 		try (FileWriter file = new FileWriter(issueFile, false)) {
 
-			if (isNew) {
-				issueJson.put(Keys.ID.getVal(), UUID.randomUUID());
-			}
+			setFieldsForNewRecord(issueJson, isNew);
 
 			if (nonNull(fileData)) {
 
@@ -72,6 +75,16 @@ public class DevIssueBookHelper {
 
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private static void setFieldsForNewRecord(final JSONObject issueJson, boolean isNew) {
+		
+		if (isNew) {
+			
+			issueJson.put(Keys.ID.getVal(), UUID.randomUUID());
+			SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM YYYY HH:mm");
+			issueJson.put(Keys.CREATED_AT.getVal(), sdf.format(new Date()));
 		}
 	}
 

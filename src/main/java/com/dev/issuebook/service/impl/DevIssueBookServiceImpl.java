@@ -4,12 +4,11 @@ import static com.dev.issuebook.constant.IssueBookConstants.FILE_PATH;
 import static com.dev.issuebook.util.DevIssueBookHelper.getFileDataIfPresent;
 import static com.dev.issuebook.util.DevIssueBookHelper.validateAndRectifyData;
 import static com.dev.issuebook.util.DevIssueBookHelper.writeJsonObjectToFile;
+import static com.dev.issuebook.util.DevIssueBookHelper.writeOrUpdateToFile;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -44,7 +43,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 
 		log.info(issueJson.toString());
 
-		writeJsonObjectToFile(issueJson, fileData, issueFile, true);
+		writeOrUpdateToFile(issueJson, fileData, issueFile, true);
 	}
 
 	@Override
@@ -54,7 +53,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 
 		JSONArray issueArray = removeJsonObjectById(id, issueFile);
 		
-		writeJsonObjectToFile(issueJson, issueArray, issueFile, false);
+		writeOrUpdateToFile(issueJson, issueArray, issueFile, false);
 	}
 
 	private JSONArray removeJsonObjectById(String id, final File issueFile) {
