@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dev.issuebook.service.DevIssueBookService;
 
-@CrossOrigin
 @RestController
 @RequestMapping("/dib")
 public class DevIssueBookController {
@@ -33,7 +33,7 @@ public class DevIssueBookController {
 	@Autowired
 	DevIssueBookService service;
 
-	@PreAuthorize("hasAuthority('USER')")
+	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@PostMapping("/issue")
 	public JSONObject createIssue(@RequestBody String issueData) {
 
@@ -48,6 +48,7 @@ public class DevIssueBookController {
 		return issueJson;
 	}
 	
+	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@PatchMapping("/issue/{id}")
 	public JSONObject updateIssue(@RequestBody String issueData, @PathVariable String id) {
 
@@ -64,7 +65,7 @@ public class DevIssueBookController {
 
 	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@GetMapping("/issue")
-	public List<Object> getIssues() {
+	public List<Object> getIssues(@RequestHeader("Authorization") String authorization) {
 
 		List<Object> issues = service.listIssues();
 
@@ -73,6 +74,7 @@ public class DevIssueBookController {
 		return issues;
 	}
 
+	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@GetMapping(value= "/issue/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<String> getIssueById(@PathVariable String id) {
 
@@ -85,6 +87,7 @@ public class DevIssueBookController {
 		return new ResponseEntity<String>(issue.toString(), HttpStatus.OK);
 	}
 	
+	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@DeleteMapping("/issue/{id}")
 	public void deleteIssue(@PathVariable String id) {
 
