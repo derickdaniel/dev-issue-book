@@ -6,13 +6,13 @@ import org.json.JSONObject;
 
 public interface DevIssueBookService {
 
-	List<Object> listIssues();
+	List<Object> listIssuesByUser(int userId);
 	
-	JSONObject getIssueById(String id);
+	JSONObject getIssueById(String id, int userId);
 
-	void saveIssue(JSONObject issueJson);
+	void saveIssueByUser(JSONObject issueJson, int userId);
 
-	void updateIssue(JSONObject issueJson, String id);
+	void updateIssue(JSONObject issueJson, String id, int userId);
 	
-	void deleteIssueById(String id);
+	void deleteIssueById(String id, int userId);
 }

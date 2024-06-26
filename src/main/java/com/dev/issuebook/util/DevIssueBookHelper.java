@@ -25,6 +25,7 @@ import com.dev.issuebook.constant.Keys;
 
 public class DevIssueBookHelper {
 
+	/* Add key if not present */
 	public static void validateAndRectifyData(JSONObject issueJson) {
 		Arrays.stream(Keys.values()).filter(k -> !issueJson.has(k.name())).map(k -> issueJson.put(k.name(), ""));
 	}

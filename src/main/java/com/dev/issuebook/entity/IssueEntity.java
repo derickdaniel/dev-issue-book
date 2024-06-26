@@ -1,17 +1,19 @@
 package com.dev.issuebook.entity;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.hibernate.annotations.TypeDefs;
+import org.json.JSONArray;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 
 @Entity
@@ -24,9 +26,13 @@ public class IssueEntity extends IdBasedEntity implements Serializable {
 	@Column(nullable = false)
 	protected Integer userId;
 
-	@Type(type = "json")
+	//@Type(type = "json")
+	//@Lob
 	@Column(columnDefinition = "json")
-	private Map<String, Object> details = new HashMap<>();
+	//@JsonIgnoreProperties(ignoreUnknown = true)
+	@Convert(converter = JSONArrayConverter.class)
+	//private Map<String, Object> details = new HashMap<>();
+	private JSONArray details;
 
 	public Integer getUserId() {
 		return userId;
@@ -36,11 +42,11 @@ public class IssueEntity extends IdBasedEntity implements Serializable {
 		this.userId = userId;
 	}
 
-	public Map<String, Object> getDetails() {
+	public JSONArray getDetails() {
 		return details;
 	}
 
-	public void setDetails(Map<String, Object> details) {
+	public void setDetails(JSONArray details) {
 		this.details = details;
 	}
 

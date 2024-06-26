@@ -3,6 +3,8 @@ package com.dev.issuebook.controller;
 import java.sql.Timestamp;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dev.issuebook.service.DevIssueBookFileService;
 import com.dev.issuebook.service.DevIssueBookService;
 
 @RestController
@@ -31,35 +33,42 @@ public class DevIssueBookController {
 	Logger log = LoggerFactory.getLogger(DevIssueBookController.class);
 
 	@Autowired
-	DevIssueBookService service;
+	private HttpServletRequest httpServletRequest;
+
+	@Autowired
+	DevIssueBookService dbService;
+
+	@Autowired
+	DevIssueBookFileService fileService;
 
 	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@PostMapping("/issue")
 	public JSONObject createIssue(@RequestBody String issueData) {
 
 		log.info("Request to create dev issue: " + issueData + " at: " + new Timestamp(System.currentTimeMillis()));
-
 		JSONObject issueJson = new JSONObject(issueData);
-
-		service.saveIssue(issueJson);
-
+		fileService.saveIssue(issueJson);
 		log.info("Created dev issue at: " + new Timestamp(System.currentTimeMillis()));
 
+		// db call start
+		String userid = httpServletRequest.getHeader("userid");
+		log.info("Found user id: " + userid + " from request context");
+		if (userid != null && !userid.isBlank()) {
+			dbService.saveIssueByUser(issueJson, Integer.parseInt(userid));
+			log.info("Create issue db call completed for user: " + userid);
+		}
 		return issueJson;
 	}
-	
+
 	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@PatchMapping("/issue/{id}")
 	public JSONObject updateIssue(@RequestBody String issueData, @PathVariable String id) {
 
 		log.info("Request to update dev issue: " + issueData + " at: " + new Timestamp(System.currentTimeMillis()));
-
 		JSONObject issueJson = new JSONObject(issueData);
-
-		service.updateIssue(issueJson, id);
-
-		log.info("Updated dev issue at: " + new Timestamp(System.currentTimeMillis()));
-
+		String userid = httpServletRequest.getHeader("userid");
+		dbService.updateIssue(issueJson, id, Integer.parseInt(userid));
+		log.info("Updated dev issue at: " + new Timestamp(System.currentTimeMillis()) + " for user: " + userid);
 		return issueJson;
 	}
 
@@ -67,32 +76,31 @@ public class DevIssueBookController {
 	@GetMapping("/issue")
 	public List<Object> getIssues(@RequestHeader("Authorization") String authorization) {
 
-		List<Object> issues = service.listIssues();
+		// List<Object> issuesFromFile = fileService.listIssues();
+		String userid = httpServletRequest.getHeader("userid");
+		log.info("Found user id: " + userid + " from request context");
 
-		log.info("Returning issue list of size: " + issues.size() + " at: " + new Timestamp(System.currentTimeMillis()));
-
-		return issues;
+		return dbService.listIssuesByUser(Integer.parseInt(userid));
 	}
 
 	@PreAuthorize("hasAuthority('ROLE_USER')")
-	@GetMapping(value= "/issue/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value = "/issue/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<String> getIssueById(@PathVariable String id) {
 
 		log.info("Request to get issue details by id: " + id);
-
-		JSONObject issue = service.getIssueById(id);
-
-		log.info("Returning issue list of size: " + issue + " at: " + new Timestamp(System.currentTimeMillis()));
-
+		String userid = httpServletRequest.getHeader("userid");
+		JSONObject issue = dbService.getIssueById(id, Integer.parseInt(userid));
+		// fileService.getIssueById(id);
 		return new ResponseEntity<String>(issue.toString(), HttpStatus.OK);
 	}
-	
+
 	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@DeleteMapping("/issue/{id}")
 	public void deleteIssue(@PathVariable String id) {
 
-		service.deleteIssueById(id);
-
-		log.info("Data removed for id: " + id + " at: " + new Timestamp(System.currentTimeMillis()));
+		String userid = httpServletRequest.getHeader("userid");
+		dbService.deleteIssueById(id, Integer.parseInt(userid));
+		log.info("Data removed for id: " + id + " at: " + new Timestamp(System.currentTimeMillis()) + " for user: "
+				+ userid);
 	}
 }

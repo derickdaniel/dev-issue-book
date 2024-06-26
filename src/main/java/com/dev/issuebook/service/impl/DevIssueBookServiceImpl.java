@@ -1,22 +1,19 @@
 package com.dev.issuebook.service.impl;
 
-import static com.dev.issuebook.constant.IssueBookConstants.FILE_PATH;
-import static com.dev.issuebook.util.DevIssueBookHelper.getFileDataIfPresent;
-import static com.dev.issuebook.util.DevIssueBookHelper.validateAndRectifyData;
-import static com.dev.issuebook.util.DevIssueBookHelper.writeJsonObjectToFile;
-import static com.dev.issuebook.util.DevIssueBookHelper.writeOrUpdateToFile;
-
-import java.io.File;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.dev.issuebook.constant.Keys;
+import com.dev.issuebook.db.repository.IssueRepository;
+import com.dev.issuebook.entity.IssueEntity;
 import com.dev.issuebook.service.DevIssueBookService;
 
 @Service
@@ -24,47 +21,104 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 
 	Logger log = LoggerFactory.getLogger(DevIssueBookServiceImpl.class);
 
+	@Autowired
+	IssueRepository issueRepo;
+
 	@Override
-	public List<Object> listIssues() {
-
-		JSONArray fileData = getFileDataIfPresent(new File(FILE_PATH));
-
-		return fileData.toList();
+	public List<Object> listIssuesByUser(int userId) {
+		return getJsonArrayByUser(userId).toList();
 	}
 
 	@Override
-	public void saveIssue(JSONObject issueJson) {
+	public void saveIssueByUser(JSONObject issueJson, int userId) {
 
-		final File issueFile = new File(FILE_PATH);
+		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
 
-		JSONArray fileData = getFileDataIfPresent(issueFile);
+		if (entity.isPresent()) {
+			IssueEntity existedEntity = entity.get();
+			JSONArray details = existedEntity.getDetails();
+			details.put(issueJson);
+			issueRepo.save(existedEntity);
 
-		validateAndRectifyData(issueJson);
+			log.info("Added new issue in EXISTING list of userId: " + userId);
 
-		log.info(issueJson.toString());
+		} else {
+			JSONArray details = new JSONArray();
+			details.put(issueJson);
 
-		writeOrUpdateToFile(issueJson, fileData, issueFile, true);
+			IssueEntity issueEntity = new IssueEntity();
+			issueEntity.setDetails(details);
+			issueEntity.setUserId(userId);
+			issueRepo.save(issueEntity);
+
+			log.info("Added new issue in NEW list of userId: " + userId);
+		}
 	}
 
 	@Override
-	public void updateIssue(JSONObject issueJson, String id) {
-		
-		final File issueFile = new File(FILE_PATH);
+	public void updateIssue(JSONObject issueJson, String id, int userId) {
 
-		JSONArray issueArray = removeJsonObjectById(id, issueFile);
-		
-		writeOrUpdateToFile(issueJson, issueArray, issueFile, false);
+		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+		if (entity.isPresent()) {
+			IssueEntity existedEntity = entity.get();
+			JSONArray details = removeJsonObjectById(existedEntity.getDetails(), id);
+			details.put(issueJson);
+			existedEntity.setDetails(details);
+			issueRepo.save(existedEntity);
+		}
 	}
 
-	private JSONArray removeJsonObjectById(String id, final File issueFile) {
-		JSONArray issueArray = getFileDataIfPresent(issueFile);
-		int counter = 0;
-		
-		Iterator<Object> itr = issueArray.iterator();
-		
+	@Override
+	public JSONObject getIssueById(String id, int userId) {
+
+		JSONObject issueDetails = new JSONObject();
+		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+
+		if (entity.isPresent()) {
+			issueDetails = findJsonInArray(entity.get().getDetails(), id);
+		}
+		log.info("Found issue for userId: " + userId + " and id: " + id);
+		return issueDetails;
+	}
+
+	@Override
+	public void deleteIssueById(String id, int userId) {
+		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+		if (entity.isPresent()) {
+			IssueEntity existedEntity = entity.get();
+			// to test
+			existedEntity.setDetails(removeJsonObjectById(existedEntity.getDetails(), id));
+			issueRepo.save(existedEntity);
+		}
+	}
+
+	private JSONArray getJsonArrayByUser(int userId) {
+
+		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+		if (entity.isPresent()) {
+			log.info("Returning issue list from db for user: " + userId);
+			return entity.get().getDetails();
+		}
+		return new JSONArray();
+	}
+
+	private JSONObject findJsonInArray(JSONArray jsonArray, String id) {
+		Iterator<Object> itr = jsonArray.iterator();
 		while (itr.hasNext()) {
 			JSONObject json = (JSONObject) itr.next();
 
+			if (id.equals(json.getString(Keys.ID.getVal()))) {
+				return json;
+			}
+		}
+		return new JSONObject();
+	}
+
+	private JSONArray removeJsonObjectById(JSONArray issueArray, String id) {
+		int counter = 0;
+		Iterator<Object> itr = issueArray.iterator();
+		while (itr.hasNext()) {
+			JSONObject json = (JSONObject) itr.next();
 			if (id.equals(json.getString(Keys.ID.getVal()))) {
 				issueArray.remove(counter);
 				break;
@@ -72,34 +126,5 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 			counter++;
 		}
 		return issueArray;
-	}
-
-	@Override
-	public JSONObject getIssueById(String id) {
-
-		JSONArray issueArray = getFileDataIfPresent(new File(FILE_PATH));
-
-		JSONObject issueDetails = new JSONObject();
-
-		Iterator<Object> itr = issueArray.iterator();
-		while (itr.hasNext()) {
-			JSONObject json = (JSONObject) itr.next();
-
-			if (id.equals(json.getString(Keys.ID.getVal()))) {
-				issueDetails = json;
-				break;
-			}
-		}
-		return issueDetails;
-	}
-
-	@Override
-	public void deleteIssueById(String id) {
-		
-		final File issueFile = new File(FILE_PATH);
-
-		JSONArray issueArray = removeJsonObjectById(id, issueFile);
-		
-		writeJsonObjectToFile(issueArray, issueFile);
 	}
 }
