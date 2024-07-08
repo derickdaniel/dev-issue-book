@@ -14,7 +14,7 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Integer> {
 
 	Optional<TaskEntity> findById(Integer id);
 
-	List<TaskEntity> findByUserId(Integer userId);
+	List<TaskEntity> findAllByUserIdOrderByCreatedDateDesc(Integer userId);
 	
 	Optional<TaskEntity> findByUserIdAndCreatedDate(int userId, LocalDate date);
 

@@ -3,6 +3,7 @@ package com.dev.issuebook.service.impl;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,10 +53,10 @@ public class TaskServiceImpl implements TaskService {
 	@Override
 	public Map<String, Object> listTasksByUser(int userId) {
 
-		List<TaskEntity> taskList = taskRepo.findByUserId(userId);
-		Map<String, Object> map = new HashMap<String, Object>();
+		List<TaskEntity> taskList = taskRepo.findAllByUserIdOrderByCreatedDateDesc(userId);
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		taskList.forEach(task -> {
-			map.put(task.getCreatedDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")), task.getTasks().toList());
+			map.put(task.getCreatedDate().format(DateTimeFormatter.ofPattern("dd MMMM yyyy | EEEE")), task.getTasks().toList());
 			// map.put("allCompleted", false);
 		});
 		return map;
