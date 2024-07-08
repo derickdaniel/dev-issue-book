@@ -13,5 +13,7 @@ public interface TaskService {
 	Map<String, Object> listTasksByUser(int userId);
 	
 	List<Object> listTasksByUserAndDate(int userId, LocalDate date);
+	
+	void deleteTaskByTaskId(String taskId, int userId);
 
 }
