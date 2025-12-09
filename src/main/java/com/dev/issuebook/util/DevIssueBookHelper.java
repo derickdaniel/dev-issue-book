@@ -80,7 +80,7 @@ public class DevIssueBookHelper {
 		System.out.println(idsToDelete);
 	}
 	
-	private static void setFieldsForNewRecord(final JSONObject issueJson, boolean isNew) {
+	public static void setFieldsForNewRecord(final JSONObject issueJson, boolean isNew) {
 		if (isNew) {
 			issueJson.put(Keys.ID.getVal(), generateId());
 			SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM YYYY HH:mm");

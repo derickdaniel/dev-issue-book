@@ -15,6 +15,7 @@ import com.dev.issuebook.constant.Keys;
 import com.dev.issuebook.db.repository.IssueRepository;
 import com.dev.issuebook.entity.IssueEntity;
 import com.dev.issuebook.service.DevIssueBookService;
+import com.dev.issuebook.util.DevIssueBookHelper;
 
 @Service
 public class DevIssueBookServiceImpl implements DevIssueBookService {
@@ -38,12 +39,23 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 			IssueEntity existedEntity = entity.get();
 			JSONArray details = existedEntity.getDetails();
 			details.put(issueJson);
+			
+			//check if issue already registered with id
+			if (!issueJson.has("id")) {
+				DevIssueBookHelper.setFieldsForNewRecord(issueJson, true);
+			}
+			
 			issueRepo.save(existedEntity);
 
 			log.info("Added new issue in EXISTING list of userId: " + userId);
 
 		} else {
 			JSONArray details = new JSONArray();
+
+			if (!issueJson.has("id")) {
+				DevIssueBookHelper.setFieldsForNewRecord(issueJson, true);
+			}
+
 			details.put(issueJson);
 
 			IssueEntity issueEntity = new IssueEntity();
@@ -62,6 +74,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 		if (entity.isPresent()) {
 			IssueEntity existedEntity = entity.get();
 			JSONArray details = removeJsonObjectById(existedEntity.getDetails(), id);
+			DevIssueBookHelper.setFieldsForNewRecord(issueJson, true);
 			details.put(issueJson);
 			existedEntity.setDetails(details);
 			issueRepo.save(existedEntity);
@@ -107,7 +120,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 		while (itr.hasNext()) {
 			JSONObject json = (JSONObject) itr.next();
 
-			if (id.equals(json.getString(Keys.ID.getVal()))) {
+			if (json.has(Keys.ID.getVal()) && id.equals(json.getString(Keys.ID.getVal()))) {
 				return json;
 			}
 		}
@@ -119,7 +132,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 		Iterator<Object> itr = issueArray.iterator();
 		while (itr.hasNext()) {
 			JSONObject json = (JSONObject) itr.next();
-			if (id.equals(json.getString(Keys.ID.getVal()))) {
+			if (json.has(Keys.ID.getVal()) && id.equals(json.getString(Keys.ID.getVal()))) {
 				issueArray.remove(counter);
 				break;
 			}
