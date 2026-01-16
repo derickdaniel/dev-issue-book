@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dev.issuebook.msclient.NotificationClient;
 import com.dev.issuebook.service.DevIssueBookFileService;
 import com.dev.issuebook.service.DevIssueBookService;
 
@@ -40,6 +41,9 @@ public class DevIssueBookController {
 
 	@Autowired
 	DevIssueBookFileService fileService;
+	
+	@Autowired
+	NotificationClient notificationClient;
 
 	@PreAuthorize("hasAuthority('ROLE_USER')")
 	@PostMapping("/issue")
@@ -57,6 +61,11 @@ public class DevIssueBookController {
 			dbService.saveIssueByUser(issueJson, Integer.parseInt(userid));
 			log.info("Create issue db call completed for user: " + userid);
 		}
+		
+		// call notification service, notify user
+		String username = httpServletRequest.getHeader("username");
+		notificationClient.sendEmail(issueData + " has been saved by User " +  " " + username);
+		
 		return issueJson;
 	}
 
@@ -69,6 +78,11 @@ public class DevIssueBookController {
 		String userid = httpServletRequest.getHeader("userid");
 		dbService.updateIssue(issueJson, id, Integer.parseInt(userid));
 		log.info("Updated dev issue at: " + new Timestamp(System.currentTimeMillis()) + " for user: " + userid);
+		
+		// call notification service, notify user
+		String username = httpServletRequest.getHeader("username");
+		notificationClient.sendEmail(issueData + " has been updated by User " +  " " + username);
+		
 		return issueJson;
 	}
 
@@ -102,5 +116,9 @@ public class DevIssueBookController {
 		dbService.deleteIssueById(id, Integer.parseInt(userid));
 		log.info("Data removed for id: " + id + " at: " + new Timestamp(System.currentTimeMillis()) + " for user: "
 				+ userid);
+		
+		// call notification service, notify user
+		String username = httpServletRequest.getHeader("username");
+		notificationClient.sendEmail(id +  " id has been deleted by User " + " " + username);
 	}
 }
