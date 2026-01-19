@@ -1,7 +1,9 @@
 package com.dev.issuebook.controller;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -63,8 +65,8 @@ public class DevIssueBookController {
 		}
 		
 		// call notification service, notify user
-		String username = httpServletRequest.getHeader("username");
-		notificationClient.sendEmail(issueData + " has been saved by User " +  " " + username);
+		
+		notificationClient.sendEmail(Map.of("user", httpServletRequest.getHeader("username"), "action", "created"));
 		
 		return issueJson;
 	}
@@ -80,8 +82,7 @@ public class DevIssueBookController {
 		log.info("Updated dev issue at: " + new Timestamp(System.currentTimeMillis()) + " for user: " + userid);
 		
 		// call notification service, notify user
-		String username = httpServletRequest.getHeader("username");
-		notificationClient.sendEmail(issueData + " has been updated by User " +  " " + username);
+		notificationClient.sendEmail(Map.of("user", httpServletRequest.getHeader("username"), "action", "updated"));
 		
 		return issueJson;
 	}
@@ -118,7 +119,6 @@ public class DevIssueBookController {
 				+ userid);
 		
 		// call notification service, notify user
-		String username = httpServletRequest.getHeader("username");
-		notificationClient.sendEmail(id +  " id has been deleted by User " + " " + username);
+		notificationClient.sendEmail(Map.of("user", httpServletRequest.getHeader("username"), "action", "deleted"));
 	}
 }
