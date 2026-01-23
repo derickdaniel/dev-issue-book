@@ -1,17 +1,27 @@
 package com.dev.issuebook.db.repository;
 
-import com.dev.issuebook.entity.IssueEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.dev.issuebook.entity.IssueEntity;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface IssueRepository extends JpaRepository<IssueEntity, Integer> {
-	
-	List<IssueEntity> findAll();
+@Repository
+public interface IssueRepository extends JpaRepository<IssueEntity, Long> {
 
-	Optional<IssueEntity> findById(Integer id);
+	// 🔍 Find all issues by user
+	List<IssueEntity> findByUserId(Integer userId);
 
-	Optional<IssueEntity> findByUserId(Integer userId);
+	// 🔍 Find issues by type (e.g., "API call", "UI")
+	List<IssueEntity> findByIssueType(String issueType);
 
+	// 🔍 Find issues by resolved status
+	List<IssueEntity> findByResolved(Boolean resolved);
+
+	// 🔍 Find issues created after a specific date
+	List<IssueEntity> findByCreatedAtAfter(java.time.LocalDateTime createdAt);
+
+	// 🔍 Find issues by keyword in description
+	List<IssueEntity> findByIssueDescContainingIgnoreCase(String keyword);
 }
