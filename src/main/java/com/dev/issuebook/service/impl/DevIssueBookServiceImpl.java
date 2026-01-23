@@ -12,8 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.dev.issuebook.constant.Keys;
-import com.dev.issuebook.db.repository.IssueRepository;
-import com.dev.issuebook.entity.IssueEntity;
+import com.dev.issuebook.db.repository.IssueBkpRepository;
+import com.dev.issuebook.entity.IssueBkpEntity;
 import com.dev.issuebook.service.DevIssueBookService;
 import com.dev.issuebook.util.DevIssueBookHelper;
 
@@ -23,7 +23,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 	Logger log = LoggerFactory.getLogger(DevIssueBookServiceImpl.class);
 
 	@Autowired
-	IssueRepository issueRepo;
+	IssueBkpRepository issueRepo;
 
 	@Override
 	public List<Object> listIssuesByUser(int userId) {
@@ -33,10 +33,10 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 	@Override
 	public void saveIssueByUser(JSONObject issueJson, int userId) {
 
-		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+		Optional<IssueBkpEntity> entity = issueRepo.findByUserId(userId);
 
 		if (entity.isPresent()) {
-			IssueEntity existedEntity = entity.get();
+			IssueBkpEntity existedEntity = entity.get();
 			JSONArray details = existedEntity.getDetails();
 			details.put(issueJson);
 			
@@ -58,10 +58,10 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 
 			details.put(issueJson);
 
-			IssueEntity issueEntity = new IssueEntity();
-			issueEntity.setDetails(details);
-			issueEntity.setUserId(userId);
-			issueRepo.save(issueEntity);
+			IssueBkpEntity issueBkpEntity = new IssueBkpEntity();
+			issueBkpEntity.setDetails(details);
+			issueBkpEntity.setUserId(userId);
+			issueRepo.save(issueBkpEntity);
 
 			log.info("Added new issue in NEW list of userId: " + userId);
 		}
@@ -70,9 +70,9 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 	@Override
 	public void updateIssue(JSONObject issueJson, String id, int userId) {
 
-		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+		Optional<IssueBkpEntity> entity = issueRepo.findByUserId(userId);
 		if (entity.isPresent()) {
-			IssueEntity existedEntity = entity.get();
+			IssueBkpEntity existedEntity = entity.get();
 			JSONArray details = removeJsonObjectById(existedEntity.getDetails(), id);
 			DevIssueBookHelper.setFieldsForNewRecord(issueJson, true);
 			details.put(issueJson);
@@ -85,7 +85,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 	public JSONObject getIssueById(String id, int userId) {
 
 		JSONObject issueDetails = new JSONObject();
-		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+		Optional<IssueBkpEntity> entity = issueRepo.findByUserId(userId);
 
 		if (entity.isPresent()) {
 			issueDetails = findJsonInArray(entity.get().getDetails(), id);
@@ -96,9 +96,9 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 
 	@Override
 	public void deleteIssueById(String id, int userId) {
-		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+		Optional<IssueBkpEntity> entity = issueRepo.findByUserId(userId);
 		if (entity.isPresent()) {
-			IssueEntity existedEntity = entity.get();
+			IssueBkpEntity existedEntity = entity.get();
 			// to test
 			existedEntity.setDetails(removeJsonObjectById(existedEntity.getDetails(), id));
 			issueRepo.save(existedEntity);
@@ -107,7 +107,7 @@ public class DevIssueBookServiceImpl implements DevIssueBookService {
 
 	private JSONArray getJsonArrayByUser(int userId) {
 
-		Optional<IssueEntity> entity = issueRepo.findByUserId(userId);
+		Optional<IssueBkpEntity> entity = issueRepo.findByUserId(userId);
 		if (entity.isPresent()) {
 			log.info("Returning issue list from db for user: " + userId);
 			return entity.get().getDetails();

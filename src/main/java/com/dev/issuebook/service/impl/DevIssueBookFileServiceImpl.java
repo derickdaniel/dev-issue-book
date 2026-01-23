@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.dev.issuebook.constant.Keys;
-import com.dev.issuebook.db.repository.IssueRepository;
+import com.dev.issuebook.db.repository.IssueBkpRepository;
 import com.dev.issuebook.service.DevIssueBookFileService;
 import com.dev.issuebook.util.DevIssueBookHelper;
 
@@ -28,7 +28,7 @@ public class DevIssueBookFileServiceImpl implements DevIssueBookFileService {
 	Logger log = LoggerFactory.getLogger(DevIssueBookFileServiceImpl.class);
 
 	@Autowired
-	IssueRepository issueRepo;
+	IssueBkpRepository issueRepo;
 
 	@Override
 	public List<Object> listIssues() {

@@ -42,6 +42,8 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/dib/**").hasRole("USER")
                 .antMatchers(HttpMethod.GET, "/dib/**").hasRole("USER")
+                .antMatchers(HttpMethod.POST, "/api/**").hasRole("USER")
+                .antMatchers(HttpMethod.GET, "/api/**").hasRole("USER")
                 .and()
                 .authorizeRequests().anyRequest().authenticated()
                 .and()
