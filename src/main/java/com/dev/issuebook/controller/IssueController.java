@@ -1,9 +1,11 @@
 package com.dev.issuebook.controller;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dev.issuebook.dto.IssueDTO;
 import com.dev.issuebook.dto.TagAssignmentDTO;
+import com.dev.issuebook.dto.TagDTO;
 import com.dev.issuebook.entity.IssueEntity;
 import com.dev.issuebook.mapper.IssueMapper;
 import com.dev.issuebook.msclient.NotificationClient;
@@ -60,16 +63,20 @@ public class IssueController {
     	IssueEntity savedIssue = issueService.saveIssue(IssueMapper.toEntity(issue));
         ResponseEntity<IssueEntity> reposnse  = ResponseEntity.ok(savedIssue);
         
-        TagAssignmentDTO tagAssignDTO = new TagAssignmentDTO();
-        tagAssignDTO.setEntityType("ISSUE");
-        tagAssignDTO.setEntityId(savedIssue.getId());
-        tagAssignDTO.setTagNameList(issue.getTags());
-        tagAssignDTO.setCreatedBy(Integer.valueOf(httpServletRequest.getHeader("userid")));
-        tagAssignDTO.setCreatedAt(LocalDateTime.now());
+        
+        if (issue.getTagsStr() != null && !issue.getTagsStr().isBlank()) {
+        	TagAssignmentDTO tagAssignDTO = new TagAssignmentDTO();
+            tagAssignDTO.setEntityType("ISSUE");
+            tagAssignDTO.setEntityId(savedIssue.getId());
+            tagAssignDTO.setTagNameList(Arrays.stream(issue.getTagsStr().split(",")).map(String::trim).collect(Collectors.toList()));
+            tagAssignDTO.setCreatedBy(Integer.valueOf(httpServletRequest.getHeader("userid")));
+            tagAssignDTO.setCreatedAt(LocalDateTime.now());
+            List<TagAssignmentDTO> list = tagsClient.assignTag(tagAssignDTO);
+            log.info("Assigned tag list: " + list);
+        }
+        
 
         notificationClient.sendEmail(Map.of("user", httpServletRequest.getHeader("username"), "action", "created"));
-        List<TagAssignmentDTO> list = tagsClient.assignTag(tagAssignDTO);
-        log.info("Assigned tag list: " + list);
 
         return reposnse;
     }
@@ -77,24 +84,36 @@ public class IssueController {
     // ✅ Get issue by ID
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/{id}")
-    public ResponseEntity<IssueEntity> getIssueById(@PathVariable Long id) {
+    public ResponseEntity<IssueDTO> getIssueById(@PathVariable Long id) {
         Optional<IssueEntity> issueOpt = issueService.getIssueById(id);
-        return issueOpt.map(ResponseEntity::ok)
-                       .orElse(ResponseEntity.notFound().build());
+        
+		// todo: to create cache and store this data
+        Map<Long, List<TagDTO>> issueTagsMap = tagsClient.getTagsByCreatedBy(Long.valueOf(httpServletRequest.getHeader("userid")));
+        
+        IssueDTO responseDTO = IssueMapper.toDTOWithTags(issueOpt.get(), issueTagsMap);
+        return ResponseEntity.ok(responseDTO);
     }
 
     // ✅ Get all issues
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping
-    public ResponseEntity<List<IssueEntity>> getAllIssues() {
-        return ResponseEntity.ok(issueService.getAllIssues());
+    public ResponseEntity<List<IssueDTO>> getAllIssues() {
+    	
+    	List<IssueEntity> issues = issueService.getAllIssues();
+    	Map<Long, List<TagDTO>> issueTagsMap = tagsClient.getTagsByCreatedBy(Long.valueOf(httpServletRequest.getHeader("userid")));
+    	
+        return ResponseEntity.ok(IssueMapper.toDTOListIncludeTags(issues, issueTagsMap));
     }
 
     // ✅ Get issues by user
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<IssueEntity>> getIssuesByUser(@PathVariable Integer userId) {
-        return ResponseEntity.ok(issueService.getIssuesByUser(userId));
+    public ResponseEntity<List<IssueDTO>> getIssuesByUser(@PathVariable Integer userId) {
+    	
+    	List<IssueEntity> issues = issueService.getIssuesByUser(userId);
+    	Map<Long, List<TagDTO>> issueTagsMap = tagsClient.getTagsByCreatedBy(userId.longValue());
+    	
+        return ResponseEntity.ok(IssueMapper.toDTOListIncludeTags(issues, issueTagsMap));
     }
 
     // ✅ Get issues by type
