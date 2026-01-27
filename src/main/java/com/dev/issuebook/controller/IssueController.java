@@ -1,8 +1,15 @@
 package com.dev.issuebook.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,13 +22,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dev.issuebook.dto.IssueDTO;
+import com.dev.issuebook.dto.TagAssignmentDTO;
 import com.dev.issuebook.entity.IssueEntity;
+import com.dev.issuebook.mapper.IssueMapper;
+import com.dev.issuebook.msclient.NotificationClient;
+import com.dev.issuebook.msclient.TagsClient;
 import com.dev.issuebook.service.IssueService;
 
 @RestController
 @RequestMapping("/api/issues")
 public class IssueController {
+	
+	Logger log = LoggerFactory.getLogger(IssueController.class);
+	
+	@Autowired
+	private TagsClient tagsClient;
+	
+	@Autowired
+	private NotificationClient notificationClient;
+	
+	@Autowired
+	private HttpServletRequest httpServletRequest;
 
+	@Autowired
     private final IssueService issueService;
 
     public IssueController(IssueService issueService) {
@@ -31,9 +55,23 @@ public class IssueController {
     // ✅ Create or update an issue
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @PostMapping
-    public ResponseEntity<IssueEntity> createOrUpdateIssue(@RequestBody IssueEntity issue) {
-        IssueEntity savedIssue = issueService.saveIssue(issue);
-        return ResponseEntity.ok(savedIssue);
+    public ResponseEntity<IssueEntity> createOrUpdateIssue(@RequestBody IssueDTO issue) {
+        
+    	IssueEntity savedIssue = issueService.saveIssue(IssueMapper.toEntity(issue));
+        ResponseEntity<IssueEntity> reposnse  = ResponseEntity.ok(savedIssue);
+        
+        TagAssignmentDTO tagAssignDTO = new TagAssignmentDTO();
+        tagAssignDTO.setEntityType("ISSUE");
+        tagAssignDTO.setEntityId(savedIssue.getId());
+        tagAssignDTO.setTagNameList(issue.getTags());
+        tagAssignDTO.setCreatedBy(Integer.valueOf(httpServletRequest.getHeader("userid")));
+        tagAssignDTO.setCreatedAt(LocalDateTime.now());
+
+        notificationClient.sendEmail(Map.of("user", httpServletRequest.getHeader("username"), "action", "created"));
+        List<TagAssignmentDTO> list = tagsClient.assignTag(tagAssignDTO);
+        log.info("Assigned tag list: " + list);
+
+        return reposnse;
     }
 
     // ✅ Get issue by ID
