@@ -10,23 +10,27 @@ public class IssueDTO {
 	private String issueDesc;
 	private String issueType; // e.g., "API", "UI", "Database"
 	private Boolean resolved;
+	private String rootCause;
 	private String resolution; // optional: explanation of fix
 	private LocalDateTime createdAt;
-	private List<String> tags; // list of tag names
+	private String tagsStr;
+	private List<TagDTO> tags; // list of tag names
 
 	// Constructors
 	public IssueDTO() {
 	}
 
-	public IssueDTO(Long id, Long userId, String issueDesc, String issueType, Boolean resolved, String resolution,
-			LocalDateTime createdAt, LocalDateTime updatedAt, List<String> tags) {
+	public IssueDTO(Long id, Long userId, String issueDesc, String issueType, Boolean resolved, String rootCause, String resolution,
+			LocalDateTime createdAt, LocalDateTime updatedAt, String tagsStr, List<TagDTO> tags) {
 		this.id = id;
 		this.userId = userId;
 		this.issueDesc = issueDesc;
 		this.issueType = issueType;
 		this.resolved = resolved;
+		this.rootCause = rootCause;
 		this.resolution = resolution;
 		this.createdAt = createdAt;
+		this.tagsStr = tagsStr;
 		this.tags = tags;
 	}
 
@@ -71,6 +75,14 @@ public class IssueDTO {
 		this.resolved = resolved;
 	}
 
+	public String getRootCause() {
+		return rootCause;
+	}
+
+	public void setRootCause(String rootCause) {
+		this.rootCause = rootCause;
+	}
+
 	public String getResolution() {
 		return resolution;
 	}
@@ -87,11 +99,19 @@ public class IssueDTO {
 		this.createdAt = createdAt;
 	}
 
-	public List<String> getTags() {
+	public String getTagsStr() {
+		return tagsStr;
+	}
+
+	public void setTagsStr(String tagsStr) {
+		this.tagsStr = tagsStr;
+	}
+
+	public List<TagDTO> getTags() {
 		return tags;
 	}
 
-	public void setTags(List<String> tags) {
+	public void setTags(List<TagDTO> tags) {
 		this.tags = tags;
 	}
 }
