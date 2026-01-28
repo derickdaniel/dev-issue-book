@@ -179,6 +179,9 @@ public class IssueController {
                 .getAuthentication()
                 .getName();
         UserInfoResponse user = authClient.getUserByUsername(username);
+        
+        tagsClient.removeAllAssignmentsForEntity("ISSUE", id);
+        
         notificationClient.notifyAction(
                 new NotificationRequest(
                         user.getEmail(),
