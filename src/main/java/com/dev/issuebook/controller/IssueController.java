@@ -38,6 +38,7 @@ import com.dev.issuebook.entity.IssueEntity;
 import com.dev.issuebook.mapper.IssueMapper;
 import com.dev.issuebook.msclient.TagsClient;
 import com.dev.issuebook.service.IssueService;
+import com.dev.issuebook.service.KafkaProducerService;
 
 @RestController
 @RequestMapping("/api/issues")
@@ -55,6 +56,8 @@ public class IssueController {
     AuthClient authClient;
     @Autowired
     private final IssueService issueService;
+    @Autowired
+    private KafkaProducerService producerService;
 
     public IssueController(IssueService issueService) {
         this.issueService = issueService;
@@ -77,7 +80,9 @@ public class IssueController {
             tagAssignDTO.setCreatedBy(Integer.valueOf(httpServletRequest.getHeader("userid")));
             tagAssignDTO.setCreatedAt(LocalDateTime.now());
             List<TagAssignmentDTO> list = tagsClient.assignTag(tagAssignDTO);
-            log.info("Assigned tag list: " + list);
+            
+            //Kafka 
+            //producerService.sendMessage(tagAssignDTO);
         }
 
         //notificationClient.sendEmail(Map.of("user", httpServletRequest.getHeader("username"), "action", "created"));
