@@ -107,12 +107,12 @@ public class IssueController {
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/{id}")
     public ResponseEntity<IssueDTO> getIssueById(@PathVariable Long id) {
-        Optional<IssueEntity> issueOpt = issueService.getIssueById(id);
+        IssueEntity issueOpt = issueService.getIssueById(id);
 
         // todo: to create cache and store this data
         Map<Long, List<TagDTO>> issueTagsMap = tagsClient.getTagsByCreatedBy(Long.valueOf(httpServletRequest.getHeader("userid")));
 
-        IssueDTO responseDTO = IssueMapper.toDTOWithTags(issueOpt.get(), issueTagsMap);
+        IssueDTO responseDTO = IssueMapper.toDTOWithTags(issueOpt, issueTagsMap);
         return ResponseEntity.ok(responseDTO);
     }
 
@@ -157,7 +157,7 @@ public class IssueController {
     @PutMapping("/{id}/resolve")
     public ResponseEntity<IssueEntity> resolveIssue(@PathVariable Long id,
                                                     @RequestParam String resolution) {
-        Optional<IssueEntity> resolvedIssue = issueService.resolveIssue(id, resolution);
+        IssueEntity resolvedIssue = issueService.resolveIssue(id, resolution);
         String username = SecurityContextHolder
                 .getContext()
                 .getAuthentication()
@@ -170,23 +170,22 @@ public class IssueController {
                         user.getUsername(), LocalDate.now()
                 )
         );
-        return resolvedIssue.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(resolvedIssue);
     }
 
     // ✅ Delete an issue
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteIssue(@PathVariable Long id) {
-        boolean deleted = issueService.deleteIssue(id);
+    public void deleteIssue(@PathVariable Long id) {
+        issueService.deleteIssue(id);
         String username = SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getName();
         UserInfoResponse user = authClient.getUserByUsername(username);
-        
+
         tagsClient.removeAllAssignmentsForEntity("ISSUE", id);
-        
+
         notificationClient.notifyAction(
                 new NotificationRequest(
                         user.getEmail(),
@@ -194,7 +193,5 @@ public class IssueController {
                         user.getUsername(), LocalDate.now()
                 )
         );
-        return deleted ? ResponseEntity.noContent().build()
-                : ResponseEntity.notFound().build();
     }
 }
