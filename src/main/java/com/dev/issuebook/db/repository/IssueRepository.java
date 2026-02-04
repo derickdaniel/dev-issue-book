@@ -24,4 +24,7 @@ public interface IssueRepository extends JpaRepository<IssueEntity, Long> {
 
 	// 🔍 Find issues by keyword in description
 	List<IssueEntity> findByIssueDescContainingIgnoreCase(String keyword);
+	
+	//
+	List<IssueEntity> findByIdIn(List<Long> ids);
 }

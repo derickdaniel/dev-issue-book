@@ -29,6 +29,10 @@ public interface TagsClient {
 	@CircuitBreaker(name = "getTagsByCreatedByCB", fallbackMethod = "getTagsByCreatedByFallback")
 	@GetMapping("api/tags/user/{createdBy}")
 	Map<Long, List<TagDTO>> getTagsByCreatedBy(@PathVariable Long createdBy);
+	
+	@CircuitBreaker(name = "getTagsByTagAndCreatedBy", fallbackMethod = "getTagsByTagAndCreatedByFallback")
+	@GetMapping("api/tags/user/{createdBy}/{tagId}")
+	Map<Long, List<TagDTO>> getTagsByTagAndCreatedBy(@PathVariable Long tagId, @PathVariable Long createdBy);
 
 	@CircuitBreaker(name = "removeAllAssignmentsForEntityCB", fallbackMethod = "removeAllAssignmentsForEntityFallback")
 	@DeleteMapping("api/tag-assignments/{entityType}/{entityId}")
@@ -42,6 +46,12 @@ public interface TagsClient {
 
 	default Map<Long, List<TagDTO>> getTagsByCreatedByFallback(Exception ex) {
 		log.error("Tag Service - Get tags by user failed.");
+		log.error(ex.getMessage());
+		return Map.of();
+	}
+	
+	default Map<Long, List<TagDTO>> getTagsByTagAndCreatedByFallback(Exception ex) {
+		log.error("Tag Service - Get tags by tag and user failed.");
 		log.error(ex.getMessage());
 		return Map.of();
 	}

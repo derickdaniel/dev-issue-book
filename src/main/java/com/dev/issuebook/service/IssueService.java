@@ -1,6 +1,7 @@
 package com.dev.issuebook.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,4 +72,9 @@ public class IssueService {
         }
         issueRepository.deleteById(id);
     }
+
+	public List<IssueEntity> findByIdIn(List<Long> arrayList) {
+		return issueRepository.findByIdIn(arrayList);
+		
+	}
 }
