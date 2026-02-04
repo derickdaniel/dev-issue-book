@@ -1,22 +1,16 @@
 package com.dev.issuebook.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.dev.issuebook.dto.NotificationRequest;
-import com.dev.issuebook.dto.UserInfoResponse;
-import com.dev.issuebook.model.UserAction;
-import com.dev.issuebook.msclient.AuthClient;
-import com.dev.issuebook.msclient.NotificationClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,13 +26,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dev.issuebook.dto.IssueDTO;
+import com.dev.issuebook.dto.NotificationRequest;
 import com.dev.issuebook.dto.TagAssignmentDTO;
 import com.dev.issuebook.dto.TagDTO;
+import com.dev.issuebook.dto.UserInfoResponse;
 import com.dev.issuebook.entity.IssueEntity;
 import com.dev.issuebook.mapper.IssueMapper;
+import com.dev.issuebook.model.UserAction;
+import com.dev.issuebook.msclient.AuthClient;
+import com.dev.issuebook.msclient.NotificationClient;
 import com.dev.issuebook.msclient.TagsClient;
 import com.dev.issuebook.service.IssueService;
-import com.dev.issuebook.service.KafkaProducerService;
 
 @RestController
 @RequestMapping("/api/issues")
@@ -56,8 +54,8 @@ public class IssueController {
     AuthClient authClient;
     @Autowired
     private final IssueService issueService;
-    @Autowired
-    private KafkaProducerService producerService;
+    //@Autowired
+    //private KafkaProducerService producerService;
 
     public IssueController(IssueService issueService) {
         this.issueService = issueService;
@@ -79,31 +77,22 @@ public class IssueController {
             tagAssignDTO.setTagNameList(Arrays.stream(issue.getTagsStr().split(",")).map(String::trim).collect(Collectors.toList()));
             tagAssignDTO.setCreatedBy(Integer.valueOf(httpServletRequest.getHeader("userid")));
             tagAssignDTO.setCreatedAt(LocalDateTime.now());
-            List<TagAssignmentDTO> list = tagsClient.assignTag(tagAssignDTO);
+            tagsClient.assignTag(tagAssignDTO);
             
-            //Kafka 
+            //Kafka (not be using for now)
             //producerService.sendMessage(tagAssignDTO);
         }
 
         //notificationClient.sendEmail(Map.of("user", httpServletRequest.getHeader("username"), "action", "created"));
-
-        String username = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
-        UserInfoResponse user = authClient.getUserByUsername(username);
-        notificationClient.notifyAction(
-                new NotificationRequest(
-                        user.getEmail(),
-                        UserAction.CREATED.toString(),
-                        user.getUsername(), LocalDate.now()
-                )
-        );
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		UserInfoResponse user = authClient.getUserByUsername(username);
+		notificationClient.notifyAction(new NotificationRequest(user.getEmail(), UserAction.CREATED.toString(),
+				user.getUsername(), LocalDate.now()));
+		
         return reposnse;
     }
 
 
-    // ✅ Get issue by ID
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/{id}")
     public ResponseEntity<IssueDTO> getIssueById(@PathVariable Long id) {
@@ -116,7 +105,6 @@ public class IssueController {
         return ResponseEntity.ok(responseDTO);
     }
 
-    // ✅ Get all issues
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping
     public ResponseEntity<List<IssueDTO>> getAllIssues() {
@@ -127,7 +115,6 @@ public class IssueController {
         return ResponseEntity.ok(IssueMapper.toDTOListIncludeTags(issues, issueTagsMap));
     }
 
-    // ✅ Get issues by user
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<IssueDTO>> getIssuesByUser(@PathVariable Integer userId) {
@@ -138,60 +125,44 @@ public class IssueController {
         return ResponseEntity.ok(IssueMapper.toDTOListIncludeTags(issues, issueTagsMap));
     }
 
-    // ✅ Get issues by type
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/type/{issueType}")
     public ResponseEntity<List<IssueEntity>> getIssuesByType(@PathVariable String issueType) {
         return ResponseEntity.ok(issueService.getIssuesByType(issueType));
     }
 
-    // ✅ Get unresolved issues
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/unresolved")
     public ResponseEntity<List<IssueEntity>> getUnresolvedIssues() {
+    	
         return ResponseEntity.ok(issueService.getUnresolvedIssues());
     }
 
-    // ✅ Resolve an issue
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @PutMapping("/{id}/resolve")
-    public ResponseEntity<IssueEntity> resolveIssue(@PathVariable Long id,
-                                                    @RequestParam String resolution) {
+	public ResponseEntity<IssueEntity> resolveIssue(@PathVariable Long id, @RequestParam String resolution) {
+    	
         IssueEntity resolvedIssue = issueService.resolveIssue(id, resolution);
-        String username = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
-        UserInfoResponse user = authClient.getUserByUsername(username);
-        notificationClient.notifyAction(
-                new NotificationRequest(
-                        user.getEmail(),
-                        UserAction.UPDATED.toString(),
-                        user.getUsername(), LocalDate.now()
-                )
-        );
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
+		UserInfoResponse user = authClient.getUserByUsername(username);
+		notificationClient.notifyAction(new NotificationRequest(user.getEmail(), UserAction.UPDATED.toString(),
+				user.getUsername(), LocalDate.now()));
+		
         return ResponseEntity.ok(resolvedIssue);
     }
 
-    // ✅ Delete an issue
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @DeleteMapping("/{id}")
     public void deleteIssue(@PathVariable Long id) {
+    	
         issueService.deleteIssue(id);
-        String username = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
+        
+		String username = SecurityContextHolder.getContext().getAuthentication().getName();
         UserInfoResponse user = authClient.getUserByUsername(username);
 
         tagsClient.removeAllAssignmentsForEntity("ISSUE", id);
 
-        notificationClient.notifyAction(
-                new NotificationRequest(
-                        user.getEmail(),
-                        UserAction.DELETED.toString(),
-                        user.getUsername(), LocalDate.now()
-                )
-        );
+		notificationClient.notifyAction(new NotificationRequest(user.getEmail(), UserAction.DELETED.toString(),
+				user.getUsername(), LocalDate.now()));
     }
 }
