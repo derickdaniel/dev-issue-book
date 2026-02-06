@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public class TagDTO {
 
+	private Long id;
 	private String uuid;
 	private String name;
 	private String slug;
@@ -14,13 +15,22 @@ public class TagDTO {
 	public TagDTO() {
 	}
 
-	public TagDTO(String uuid, String name, String slug, String description, String color, LocalDateTime createdAt) {
+	public TagDTO(Long id, String uuid, String name, String slug, String description, String color, LocalDateTime createdAt) {
 		this.uuid = uuid;
 		this.name = name;
 		this.slug = slug;
 		this.description = description;
 		this.color = color;
 		this.createdAt = createdAt;
+		this.id = id;
+	}
+	
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public String getUuid() {

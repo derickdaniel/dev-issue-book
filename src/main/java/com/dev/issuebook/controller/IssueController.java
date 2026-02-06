@@ -2,6 +2,7 @@ package com.dev.issuebook.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -136,6 +137,17 @@ public class IssueController {
     public ResponseEntity<List<IssueEntity>> getUnresolvedIssues() {
     	
         return ResponseEntity.ok(issueService.getUnresolvedIssues());
+    }
+    
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @GetMapping("/tag/{tagId}")
+    public ResponseEntity<List<IssueDTO>> getIssuesByTag(@PathVariable Long tagId) {
+    	
+    	Map<Long, List<TagDTO>> issueTagsMap = tagsClient.getTagsByTagAndCreatedBy(tagId, Long.valueOf(httpServletRequest.getHeader("userid")));
+    	
+    	List<IssueEntity> issues = issueService.findByIdIn(new ArrayList<>(issueTagsMap.keySet().stream().collect(Collectors.toList())));
+    	
+        return ResponseEntity.ok(IssueMapper.toDTOListIncludeTags(issues, issueTagsMap));
     }
 
     @PreAuthorize("hasAuthority('ROLE_USER')")
