@@ -12,6 +12,7 @@ public class IssueDTO {
 	private Boolean resolved;
 	private String rootCause;
 	private String resolution; // optional: explanation of fix
+	private String refs;
 	private LocalDateTime createdAt;
 	private String tagsStr;
 	private List<TagDTO> tags; // list of tag names
@@ -20,7 +21,7 @@ public class IssueDTO {
 	public IssueDTO() {
 	}
 
-	public IssueDTO(Long id, Long userId, String issueDesc, String issueType, Boolean resolved, String rootCause, String resolution,
+	public IssueDTO(Long id, Long userId, String issueDesc, String issueType, Boolean resolved, String rootCause, String resolution, String refs,
 			LocalDateTime createdAt, LocalDateTime updatedAt, String tagsStr, List<TagDTO> tags) {
 		this.id = id;
 		this.userId = userId;
@@ -29,6 +30,7 @@ public class IssueDTO {
 		this.resolved = resolved;
 		this.rootCause = rootCause;
 		this.resolution = resolution;
+		this.refs = refs;
 		this.createdAt = createdAt;
 		this.tagsStr = tagsStr;
 		this.tags = tags;
@@ -85,6 +87,14 @@ public class IssueDTO {
 
 	public String getResolution() {
 		return resolution;
+	}
+
+	public String getRefs() {
+		return refs;
+	}
+
+	public void setRefs(String refs) {
+		this.refs = refs;
 	}
 
 	public void setResolution(String resolution) {

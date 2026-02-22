@@ -24,6 +24,7 @@ public class IssueMapper {
 		dto.setResolved(entity.getResolved());
 		dto.setRootCause(entity.getRootCause());
 		dto.setResolution(entity.getResolution());
+		dto.setRefs(entity.getRefs());
 		dto.setCreatedAt(entity.getCreatedAt());
 
 		// Tags are not stored in IssueEntity directly; they come from Tag-Service
@@ -34,7 +35,10 @@ public class IssueMapper {
 	
 	public static IssueDTO toDTOWithTags(IssueEntity entity, Map<Long, List<TagDTO>> issueTagsMap) {
 		IssueDTO dto = IssueMapper.toDTO(entity);
-		dto.setTags(issueTagsMap.get(dto.getId()));
+		
+		List<TagDTO> tagDtoList = issueTagsMap.get(dto.getId());
+		dto.setTags(tagDtoList);
+		buildAndSetTagStr(dto, tagDtoList);
 		
 		return dto;
 	}
@@ -52,6 +56,7 @@ public class IssueMapper {
 		entity.setResolved(dto.getResolved());
 		entity.setRootCause(dto.getRootCause());
 		entity.setResolution(dto.getResolution());
+		entity.setRefs(dto.getRefs());
 		entity.setCreatedAt(dto.getCreatedAt());
 
 		// Tags are ignored here since they belong to Tag-Service
@@ -83,9 +88,19 @@ public class IssueMapper {
 	}
 
 	private static IssueDTO setTags(IssueDTO dto, Map<Long, List<TagDTO>> issueTagsMap) {
-		dto.setTags(issueTagsMap.get(dto.getId()));
-		System.out.println(dto.getTags());
+		List<TagDTO> tagDtoList = issueTagsMap.get(dto.getId());
+		dto.setTags(tagDtoList);
+		buildAndSetTagStr(dto, tagDtoList);
 		return dto;
+	}
+
+	private static void buildAndSetTagStr(IssueDTO dto, List<TagDTO> tagDtoList) {
+		if (tagDtoList != null) {
+			dto.setTagsStr(tagDtoList.stream().map(TagDTO::getName).collect(Collectors.joining(", ")));
+		} else {
+			dto.setTagsStr("");
+			dto.setTags(List.of());
+		}
 	}
 
 }
